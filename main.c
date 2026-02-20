@@ -60,12 +60,13 @@ int main(int argc, char **argv) {
                         if(url_start_index==-1||url_end_index==-1){
                             printf("invalid directive at line %d : %s",j,string_cstr(line));
                         }
-                        size_t allocation_size=(url_end_index-url_start_index);
+                        size_t allocation_size=(url_end_index-url_start_index)-1;
                         char* url_buffer =malloc(allocation_size+1);
-                        strncpy(url_buffer, string_cstr(line)+url_start_index, url_end_index-url_start_index);
+                        strncpy(url_buffer, string_cstr(line)+url_start_index+1, (url_end_index-url_start_index)-1);
                         url_buffer[allocation_size]='\0';//append null terminator
                         printf("captured url : %s\n",url_buffer);
 
+                        //create directory path by removing domain from url_buffer
                         free(url_buffer);
                     }
                 }
