@@ -6,6 +6,8 @@
 #include "string.h"
 #include "vector.h"
 
+#define TEMPFOLDER "gitcc/"
+
 int main(int argc, char **argv) {
     string *command = create_string();
     for (int i = 0; i < argc; i++) {
@@ -28,16 +30,49 @@ int main(int argc, char **argv) {
                 if(file_content==NULL){ // if the file content is NULL exit the program
                     printf("unable to read file '%s'\n",argv[i]);
                     free_string(&command);
+                    free(file_content);
                     exit(EXIT_FAILURE);
                 }
-                string* file_string=create_string(); //create file_string
-                if(string_append_str(file_string, file_content)){//append file_content to file_string, if unable to append exit the program
-                    printf("unable to create temporary file string\n");
-                    free_string(&command);
+                size_t len_of_content=strlen(file_content);
+                if(len_of_content==0){// if the len of the file content is 0 skip to next iteration
+                    printf("empty file passed skipping\n");
+                    free(file_content);
+                    continue;
+                }
+                string* file_string=create_string();
+                if(file_string==NULL){//unable to create string, exit the program
+                    free(file_content);
+                    exit(EXIT_FAILURE);
+                }
+                string_append_str(file_string,file_content);
+                vector* file_string_vector=string_split_char(file_string, '\n');
+                if(file_string_vector==NULL){//unable to create string vector, exit the program
                     free_string(&file_string);
+                    free(file_content);
                     exit(EXIT_FAILURE);
                 }
+
+                for(int j=0;j<vec_count(file_string_vector);j++){
+                    string* line=vec_at(file_string_vector,j);
+                    if(string_startswith_str(line, "#include_url")){
+                        int url_start_index=string_indexof_char(line,'"');
+                        int url_end_index=string_lastindexof_char(line,'"');
+                        if(url_start_index==-1||url_end_index==-1){
+                            printf("invalid directive at line %d : %s",j,string_cstr(line));
+                        }
+                        size_t allocation_size=(url_end_index-url_start_index);
+                        char* url_buffer =malloc(allocation_size+1);
+                        strncpy(url_buffer, string_cstr(line)+url_start_index, url_end_index-url_start_index);
+                        url_buffer[allocation_size]='\0';//append null terminator
+                        printf("captured url : %s\n",url_buffer);
+
+                        free(url_buffer);
+                    }
+                }
+
+                free_string_vector(&file_string_vector);
                 free_string(&file_string);
+                free(file_content);
             }
             else{
                 printf("file '%s' does not exist\n",argv[i]);
